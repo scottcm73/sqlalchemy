@@ -3,6 +3,7 @@ import decimal
 import numpy as np
 import pandas as pd
 import os
+
 import sqlalchemy
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import declarative_base
@@ -12,7 +13,7 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.types import Date, DateTime
 from pprint import pprint
 
-from flask import Flask, render_template, url_for, jsonify
+from flask import Flask, render_template, url_for, jsonify, request
 
 db_path = os.path.join("Resources", "hawaii.sqlite")
 engine = create_engine(f"sqlite:///{db_path}")
@@ -114,7 +115,7 @@ app = Flask(__name__)
 @app.route("/")
 def main():
     main = "main"
-    return render_template("main.html")
+    return render_template("index.html")
 
 
 @app.route("/api/v1.0/precipitation")
@@ -173,7 +174,8 @@ def tobs2():
 
 @app.route("/api/v1.0/start")
 def starts():
-    start_date = "2016-10-12"
+    start_date=request.args.get('start_date')
+    
     start = the_start(start_date)
 
     return render_template("starts.html", start=start, start_date=start_date)
@@ -181,7 +183,7 @@ def starts():
 
 @app.route("/api/v1.0/start2")
 def starts2():
-    start_date = "2016-10-12"
+    start_date=request.args.get('start_date')
     start = the_start(start_date)
     start_df = to_dataframe(start)
     start_dict = start_df.to_dict()
@@ -190,9 +192,9 @@ def starts2():
 
 @app.route("/api/v1.0/start-end")
 def start_end():
-
-    end_date = "2016-12-1"
-    start_date = "2016-10-12"
+    start_date=request.args.get('start_date')
+    end_date=request.args.get('end_date')
+    
     start_end = (
         session.query(
             func.min(Measurement.tobs),
@@ -208,6 +210,27 @@ def start_end():
     return render_template(
         "end.html", start=start_end, start_date=start_date, end_date=end_date
     )
+
+@app.route("/api/v1.0/start-end2")
+def start_end2():
+    start_date=request.args.get('start_date')
+    end_date=request.args.get('end_date')
+    
+    start_end = (
+        session.query(
+            func.min(Measurement.tobs),
+            func.avg(Measurement.tobs),
+            func.max(Measurement.tobs),
+        )
+        .filter(Measurement.date >= (dt.datetime.strptime(start_date, "%Y-%m-%d")))
+        .filter(Measurement.date <= (dt.datetime.strptime(end_date, "%Y-%m-%d")))
+        .order_by(Measurement.date)
+        .filter(Measurement.station == "USC00519281")
+    )
+    start_end_df=to_dataframe(start_end)
+    start_end_dict=start_end_df.to_dict()
+    return start_end_dict
+    
 
 
 if __name__ == "__main__":

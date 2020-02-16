@@ -13,7 +13,7 @@ matplotlib = "*"
 pandas = "*"
 numpy = "*"
 datetime = "*"
-
+flask = "*"
 
 [requires]
 python_version = "3.7"
