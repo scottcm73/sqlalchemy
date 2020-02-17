@@ -15,8 +15,7 @@ from pprint import pprint
 
 from flask import Flask, render_template, url_for, jsonify, request
 
-db_path = os.path.join("Resources", "hawaii.sqlite")
-engine = create_engine(f"sqlite:///{db_path}")
+
 
 
 def the_start(start_date):
@@ -91,7 +90,7 @@ class DictMixIn:
 class Measurement(Base, DictMixIn):
     __tablename__ = "measurement"
     id = Column(Integer, primary_key=True)
-    station = Column(String)
+    station = Column(String(50))
     date = Column(Date)
     prcp = Column(Float)
     tobs = Column(Float)
@@ -100,8 +99,8 @@ class Measurement(Base, DictMixIn):
 class Station(Base, DictMixIn):
     __tablename__ = "station"
     id = Column(Integer, primary_key=True)
-    station = Column(String)
-    name = Column(String)
+    station = Column(String(50))
+    name = Column(String(30))
     latitude = Column(Float)
     longitude = Column(Float)
     elevation = Column(Float)
@@ -110,7 +109,10 @@ class Station(Base, DictMixIn):
 session = Session(engine)
 
 app = Flask(__name__)
-
+@app.before_first_request
+def init_app():
+    db_path = os.path.join("Resources", "hawaii.sqlite")
+    engine = create_engine(f"sqlite:///{db_path}")
 
 @app.route("/")
 def main():
@@ -130,7 +132,7 @@ def prcp():
     test.columns = ["month", "precipitation"]
 
     return render_template(
-        "precipitation.html", test_json=test_json, test=test.to_html()
+        "precipitation.html", test=test.to_html()
     )
 
 
