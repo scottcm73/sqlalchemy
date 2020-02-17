@@ -13,9 +13,50 @@ from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.types import Date, DateTime
 from pprint import pprint
 
+
 from flask import Flask, render_template, url_for, jsonify, request
 
+app = Flask(__name__)
+db_path = os.path.join("Resources", "hawaii.sqlite")
+engine = create_engine(os.getenv("JAWSDB_URL", f"sqlite:///{db_path}"))
+session = Session(engine)
 
+
+
+
+
+
+
+Base = declarative_base()
+
+
+class DictMixIn:
+    def to_dict(self):
+        return {
+            column.name: getattr(self, column.name)
+            if not isinstance(getattr(self, column.name), datetime.datetime)
+            else getattr(self, column.name).isoformat()
+            for column in self.__table__.columns
+        }
+
+
+class Measurement(Base, DictMixIn):
+    __tablename__ = "measurement"
+    id = Column(Integer, primary_key=True)
+    station = Column(String(30))
+    date = Column(Date)
+    prcp = Column(Float)
+    tobs = Column(Float)
+
+
+class Station(Base, DictMixIn):
+    __tablename__ = "station"
+    id = Column(Integer, primary_key=True)
+    station = Column(String(30))
+    name = Column(String(50))
+    latitude = Column(Float)
+    longitude = Column(Float)
+    elevation = Column(Float)
 
 
 def the_start(start_date):
@@ -67,56 +108,27 @@ def temp_data():
     the_temps = (
         session.query(Measurement.date, Measurement.tobs)
         .filter(Measurement.date >= (dt.datetime.strptime("2016-08-23", "%Y-%m-%d")))
-        .order_by(Measurement.date)
         .filter(Measurement.station == "USC00519281")
+        .order_by(Measurement.date)
+
     )
 
     return the_temps
 
 
-Base = declarative_base()
 
 
-class DictMixIn:
-    def to_dict(self):
-        return {
-            column.name: getattr(self, column.name)
-            if not isinstance(getattr(self, column.name), datetime.datetime)
-            else getattr(self, column.name).isoformat()
-            for column in self.__table__.columns
-        }
-
-
-class Measurement(Base, DictMixIn):
-    __tablename__ = "measurement"
-    id = Column(Integer, primary_key=True)
-    station = Column(String(50))
-    date = Column(Date)
-    prcp = Column(Float)
-    tobs = Column(Float)
-
-
-class Station(Base, DictMixIn):
-    __tablename__ = "station"
-    id = Column(Integer, primary_key=True)
-    station = Column(String(50))
-    name = Column(String(30))
-    latitude = Column(Float)
-    longitude = Column(Float)
-    elevation = Column(Float)
-
-
-session = Session(engine)
-
-app = Flask(__name__)
 @app.before_first_request
 def init_app():
-    db_path = os.path.join("Resources", "hawaii.sqlite")
-    engine = create_engine(f"sqlite:///{db_path}")
+    return
+    
+
+    
+
 
 @app.route("/")
 def main():
-    main = "main"
+  
     return render_template("index.html")
 
 
